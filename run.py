@@ -80,5 +80,8 @@ if __name__ == "__main__":
     # Initialize DB before launching server
     initialize_database_tables()
     
-    print("[*] Launching Valen.ai Supreme Core Engine...")
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    # Get dynamic port from cloud environment (defaults to 8000 for local testing)
+    port = int(os.environ.get("PORT", 8000))
+    print(f"[*] Launching Valen.ai Supreme Core Engine on port {port}...")
+    
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
