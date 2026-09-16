@@ -6,9 +6,9 @@ from pydantic import BaseModel, Field
 import sqlite3
 import traceback
 
-# Import local database and all feature routers (Vault, Bots, Chat, Audit)
+# Import local database and all feature routers (Vault, Bots, Chat, Audit, Telemetry)
 from database import get_db_connection, db_transaction
-from routers import vault, bots, chat, audit
+from routers import vault, bots, chat, audit, telemetry
 
 # Initialize Master FastAPI App for Valen.ai Ecosystem
 app = FastAPI(
@@ -22,6 +22,7 @@ app.include_router(vault.router)
 app.include_router(bots.router)
 app.include_router(chat.router)
 app.include_router(audit.router)
+app.include_router(telemetry.router)
 
 # Enable CORS for secure cross-origin communication between Android APK and Web Dashboard
 app.add_middleware(
