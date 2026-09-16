@@ -6,9 +6,9 @@ from pydantic import BaseModel, Field
 import sqlite3
 import traceback
 
-# Import local database and security vault router
+# Import local database and feature routers (Vault & Bots)
 from database import get_db_connection, db_transaction
-from routers import vault
+from routers import vault, bots
 
 # Initialize Master FastAPI App for Valen.ai Ecosystem
 app = FastAPI(
@@ -17,8 +17,9 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Register Security Vault Router
+# Register Feature Routers
 app.include_router(vault.router)
+app.include_router(bots.router)
 
 # Enable CORS for secure cross-origin communication between Android APK and Web Dashboard
 app.add_middleware(
@@ -70,16 +71,6 @@ async def global_exception_handler(request: Request, exc: Exception):
             "path": request.url.path
         }
     )
-
-
-# --- Pydantic Data Validation Models ---
-
-class BotPayload(BaseModel):
-    bot_id: str = Field(..., min_length=2, max_length=50)
-    bot_name: str = Field(..., min_length=2, max_length=100)
-    status: str = Field(..., pattern="^(ACTIVE|OFFLINE|STANDBY|ERROR)$")
-    cpu_load: float = Field(..., ge=0.0, le=100.0)
-    memory_usage: float = Field(..., ge=0.0, le=100.0)
 
 
 # --- Multi-Page Clean URL Route Handlers (HTML Views) ---
@@ -153,45 +144,6 @@ async def serve_vault_page():
     </body>
     </html>
     """
-
-
-# --- Core Backend API Endpoints (JSON) ---
-
-@app.get("/api/v1/bots/matrix", tags=["Bot Fleet"])
-async def fetch_bot_matrix():
-    """Fetch real-time records of all active and offline background bots."""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM bot_registry ORDER BY last_active DESC")
-        rows = cursor.fetchall()
-        conn.close()
-        
-        bots = [dict(row) for row in rows]
-        return {"status": "success", "count": len(bots), "data": bots}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/api/v1/bots/register", tags=["Bot Fleet"])
-async def register_or_update_bot(payload: BotPayload):
-    """Register or update operational telemetry for any autonomous sub-bot."""
-    try:
-        with db_transaction() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO bot_registry (bot_id, bot_name, status, cpu_load, memory_usage, last_active)
-                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                ON CONFLICT(bot_id) DO UPDATE SET
-                    bot_name = excluded.bot_name,
-                    status = excluded.status,
-                    cpu_load = excluded.cpu_load,
-                    memory_usage = excluded.memory_usage,
-                    last_active = CURRENT_TIMESTAMP
-            """, (payload.bot_id, payload.bot_name, payload.status, payload.cpu_load, payload.memory_usage))
-            
-        return {"status": "success", "message": f"Bot '{payload.bot_name}' telemetry synchronized successfully."}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
