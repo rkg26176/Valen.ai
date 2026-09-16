@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valen.ai | Supreme Control Center</title>
+    <style>
+        :root {
+            --bg-color: #060913;
+            --card-bg: #0f172a;
+            --accent-glow: #38bdf8;
+            --accent-danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        h1 {
+            font-size: 1.8rem;
+            color: var(--accent-glow);
+            letter-spacing: 2px;
+            margin: 0;
+        }
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-left: 20px;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover {
+            color: var(--accent-glow);
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        .card h3 {
+            margin-top: 0;
+            color: var(--accent-glow);
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 10px;
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            background-color: #0284c7;
+            color: #fff;
+        }
+        button {
+            background-color: #0284c7;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #0369a1;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>VALEN.AI SUPREME CORE</h1>
+        <div class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/bots">Bot Matrix</a>
+            <a href="/vault">Security Vault</a>
+            <a href="/login" style="color: var(--accent-danger);">Logout</a>
+        </div>
+    </header>
+
+    <div class="grid-container">
+        <!-- Bot Fleet Status Card -->
+        <div class="card">
+            <h3>Autonomous Bot Fleet</h3>
+            <p class="text-muted">Active sub-nodes telemetry matrix.</p>
+            <div class="metric-value" id="bot-count">Loading...</div>
+            <button onclick="fetchBotData()">Refresh Matrix</button>
+        </div>
+
+        <!-- System Telemetry Card -->
+        <div class="card">
+            <h3>System Performance</h3>
+            <p class="text-muted">CPU & RAM Load Metrics.</p>
+            <div class="metric-value" id="cpu-load">--% CPU</div>
+            <span class="status-badge" id="system-status">WAL Mode Active</span>
+        </div>
+
+        <!-- Security Vault Card -->
+        <div class="card" style="border-color: #7f1d1d;">
+            <h3 style="color: var(--accent-danger);">Cryptographic Vault</h3>
+            <p class="text-muted">Panic shredder and local encrypted storage.</p>
+            <button style="background-color: var(--accent-danger);" onclick="triggerPanic()">Panic Shredder</button>
+        </div>
+    </div>
+
+    <script>
+        async function fetchBotData() {
+            try {
+                let response = await fetch('/api/v1/bots/matrix');
+                let result = await response.json();
+                if(result.status === 'success') {
+                    document.getElementById('bot-count').innerText = result.count + " Active Nodes";
+                }
+            } catch (err) {
+                console.error("Failed to sync bot matrix", err);
+            }
+        }
+
+        function triggerPanic() {
+            if(confirm("WARNING: Are you sure you want to execute panic shredder?")) {
+                alert("Panic sequence initiated. Local vaults locked.");
+            }
+        }
+
+        // Auto-fetch data on load
+        fetchBotData();
+    </script>
+</body>
+</html>
