@@ -5,7 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import sqlite3
 import traceback
+
+# Import local database and security vault router
 from database import get_db_connection, db_transaction
+from routers import vault
 
 # Initialize Master FastAPI App for Valen.ai Ecosystem
 app = FastAPI(
@@ -13,6 +16,9 @@ app = FastAPI(
     description="Production-grade autonomous AI ecosystem backend with zero-error architecture.",
     version="1.0.0"
 )
+
+# Register Security Vault Router
+app.include_router(vault.router)
 
 # Enable CORS for secure cross-origin communication between Android APK and Web Dashboard
 app.add_middleware(
@@ -55,7 +61,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 async def global_exception_handler(request: Request, exc: Exception):
     """Catch-all for any unhandled server exceptions with logging support."""
     error_trace = traceback.format_exc()
-    # In production, log error_trace to audit_logs table securely
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
