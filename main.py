@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 import sqlite3
 import traceback
@@ -23,6 +24,9 @@ app.include_router(bots.router)
 app.include_router(chat.router)
 app.include_router(audit.router)
 app.include_router(telemetry.router)
+
+# Initialize Jinja2 Templates Directory for Multi-Page Frontend UI
+templates = Jinja2Templates(directory="templates")
 
 # Enable CORS for secure cross-origin communication between Android APK and Web Dashboard
 app.add_middleware(
@@ -76,77 +80,32 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
-# --- Multi-Page Clean URL Route Handlers (HTML Views) ---
+# --- Multi-Page Clean URL Route Handlers (Jinja2 Templates Integration) ---
 
 @app.get("/", response_class=HTMLResponse)
-async def serve_landing():
+async def serve_landing(request: Request):
     """Valen.ai Public Landing Portal"""
-    return """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head><meta charset="UTF-8"><title>Valen.ai | Autonomous Core</title></head>
-    <body style="background:#090d16; color:#f8fafc; font-family:sans-serif; text-align:center; padding-top:120px;">
-        <h1 style="font-size:3rem; color:#38bdf8;">VALEN.AI ECOSYSTEM</h1>
-        <p style="color:#94a3b8; font-size:1.2rem;">Autonomous Intelligence & Fleet Matrix Operational.</p>
-    </body>
-    </html>
-    """
+    return templates.TemplateResponse("landing.html", {"request": request})
 
 @app.get("/login", response_class=HTMLResponse)
-async def serve_login():
+async def serve_login(request: Request):
     """Secure Admin Authentication Portal"""
-    return """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head><meta charset="UTF-8"><title>Valen.ai | Secure Login</title></head>
-    <body style="background:#090d16; color:#f8fafc; font-family:sans-serif; text-align:center; padding-top:120px;">
-        <h2 style="color:#38bdf8;">Admin Authentication Gate</h2>
-        <p style="color:#94a3b8;">Enter Master Key to access Supreme Dashboard.</p>
-    </body>
-    </html>
-    """
+    return templates.TemplateResponse("login.html", {"request": request})
 
 @app.get("/dashboard", response_class=HTMLResponse)
-async def serve_dashboard():
+async def serve_dashboard(request: Request):
     """Supreme Admin Control Center"""
-    return """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head><meta charset="UTF-8"><title>Valen.ai | Dashboard</title></head>
-    <body style="background:#090d16; color:#f8fafc; font-family:sans-serif; text-align:center; padding-top:120px;">
-        <h1 style="color:#38bdf8;">Supreme Control Center</h1>
-        <p style="color:#94a3b8;">Live Telemetry & Fleet Monitoring active.</p>
-    </body>
-    </html>
-    """
+    return templates.TemplateResponse("dashboard.html", {"request": request})
 
 @app.get("/bots", response_class=HTMLResponse)
-async def serve_bots_page():
+async def serve_bots_page(request: Request):
     """Live Bot Fleet Matrix Page"""
-    return """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head><meta charset="UTF-8"><title>Valen.ai | Bot Matrix</title></head>
-    <body style="background:#090d16; color:#f8fafc; font-family:sans-serif; text-align:center; padding-top:120px;">
-        <h1 style="color:#38bdf8;">Autonomous Bot Fleet Matrix</h1>
-        <p style="color:#94a3b8;">Sub-bot tracking and health diagnostics.</p>
-    </body>
-    </html>
-    """
+    return templates.TemplateResponse("bots.html", {"request": request})
 
 @app.get("/vault", response_class=HTMLResponse)
-async def serve_vault_page():
+async def serve_vault_page(request: Request):
     """Cryptographic Security Vault Page"""
-    return """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head><meta charset="UTF-8"><title>Valen.ai | Security Vault</title></head>
-    <body style="background:#090d16; color:#f8fafc; font-family:sans-serif; text-align:center; padding-top:120px;">
-        <h1 style="color:#ef4444;">Cryptographic Security Vault</h1>
-        <p style="color:#94a3b8;">Panic shredder and local encrypted storage controls.</p>
-    </body>
-    </html>
-    """
+    return templates.TemplateResponse("vault.html", {"request": request})
 
 
 if __name__ == "__main__":
