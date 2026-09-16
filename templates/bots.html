@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valen.ai | Bot Fleet Matrix</title>
+    <style>
+        :root {
+            --bg-color: #060913;
+            --card-bg: #0f172a;
+            --accent-glow: #38bdf8;
+            --accent-danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        h1 {
+            font-size: 1.8rem;
+            color: var(--accent-glow);
+            letter-spacing: 2px;
+            margin: 0;
+        }
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-left: 20px;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover {
+            color: var(--accent-glow);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #1e293b;
+        }
+        th {
+            background-color: #1e293b;
+            color: var(--accent-glow);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+        tr:hover {
+            background-color: rgba(56, 189, 248, 0.05);
+        }
+        .status-active {
+            color: #22c55e;
+            font-weight: bold;
+        }
+        .status-offline {
+            color: var(--accent-danger);
+            font-weight: bold;
+        }
+        button {
+            background-color: var(--accent-danger);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.3s;
+        }
+        button:hover {
+            opacity: 0.8;
+        }
+        .action-bar {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .btn-primary {
+            background-color: #0284c7;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>VALEN.AI BOT FLEET MATRIX</h1>
+        <div class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/bots" style="color: var(--accent-glow);">Bot Matrix</a>
+            <a href="/vault">Security Vault</a>
+            <a href="/login" style="color: var(--accent-danger);">Logout</a>
+        </div>
+    </header>
+
+    <div class="action-bar">
+        <button class="btn-primary" onclick="loadBotFleet()">Sync Fleet Status</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Bot ID</th>
+                <th>Bot Name</th>
+                <th>Status</th>
+                <th>CPU Load</th>
+                <th>Memory Usage</th>
+                <th>Last Active</th>
+                <th>Command</th>
+            </tr>
+        </thead>
+        <tbody id="bot-table-body">
+            <tr>
+                <td colspan="7" style="text-align: center; color: var(--text-muted);">Fetching autonomous nodes telemetry...</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        async function loadBotFleet() {
+            try {
+                let response = await fetch('/api/v1/bots/matrix');
+                let result = await response.json();
+                
+                let tbody = document.getElementById('bot-table-body');
+                tbody.innerHTML = '';
+                
+                if(result.status === 'success' && result.data.length > 0) {
+                    result.data.forEach(bot => {
+                        let statusClass = bot.status === 'ACTIVE' ? 'status-active' : 'status-offline';
+                        let row = `<tr>
+                            <td>${bot.bot_id}</td>
+                            <td>${bot.bot_name}</td>
+                            <td><span class="${statusClass}">${bot.status}</span></td>
+                            <td>${bot.cpu_load}%</td>
+                            <td>${bot.memory_usage}%</td>
+                            <td>${bot.last_active}</td>
+                            <td><button onclick="terminateBot('${bot.bot_id}')">Terminate</button></td>
+                        </tr>`;
+                        tbody.innerHTML += row;
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No active autonomous sub-bots found in registry.</td></tr>`;
+                }
+            } catch (err) {
+                console.error("Error loading bot matrix:", err);
+            }
+        }
+
+        async function terminateBot(botId) {
+            if(confirm(`Are you sure you want to forcefully terminate bot node: ${botId}?`)) {
+                let masterKey = prompt("Enter Master Key to authorize termination:");
+                if(!masterKey) return;
+                
+                try {
+                    let res = await fetch(`/api/v1/bots/terminate/${botId}`, {
+                        method: 'DELETE',
+                        headers: { 'x-master-key': masterKey }
+                    });
+                    let data = await res.json();
+                    alert(data.message || "Command executed.");
+                    loadBotFleet();
+                } catch (e) {
+                    alert("Termination request failed.");
+                }
+            }
+        }
+
+        // Load data on startup
+        loadBotFleet();
+    </script>
+</body>
+</html>
