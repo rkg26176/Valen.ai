@@ -3,7 +3,9 @@ import os
 import threading
 from contextlib import contextmanager
 
+# Database configuration variables
 DB_NAME = "valen_core.db"
+DB_FILE = DB_NAME  # Added for compatibility with run.py imports
 DB_PATH = os.path.abspath(DB_NAME)
 
 # Thread lock for safe concurrent operations in asynchronous environments
@@ -42,7 +44,7 @@ def db_transaction():
 
 def initialize_enterprise_database():
     """
-    Create all core tables required for the 10,000+ line ecosystem,
+    Create all core tables required for the ecosystem,
     including Bot Matrix, Telemetry, Audit Logs, and Secure Vaults.
     """
     with db_transaction() as conn:
