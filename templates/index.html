@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valen.ai Enterprise Ecosystem</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --panel-bg: #131b2e;
+            --text-color: #ffffff;
+            --text-secondary: #94a3b8;
+            --accent-color: #0ea5e9;
+            --accent-glow: rgba(14, 165, 233, 0.4);
+            --border-color: #1e293b;
+        }
+        [data-theme="light"] {
+            --bg-color: #f8fafc;
+            --panel-bg: #ffffff;
+            --text-color: #0f172a;
+            --text-secondary: #64748b;
+            --accent-color: #0284c7;
+            --accent-glow: rgba(2, 132, 199, 0.3);
+            --border-color: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); height: 100vh; display: flex; flex-direction: column; overflow: hidden; transition: background 0.3s, color 0.3s; }
+
+        /* Splash Animation Overlay */
+        #splash-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color); display: flex; justify-content: center; align-items: center;
+            z-index: 9999; animation: fadeOut 0.8s ease 1.5s forwards;
+        }
+        #splash-logo { font-size: 3rem; font-weight: 800; color: var(--accent-color); letter-spacing: 2px; text-shadow: 0 0 20px var(--accent-glow); animation: pulseLogo 1.5s infinite; }
+        @keyframes pulseLogo { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
+
+        /* Header Navigation */
+        header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: var(--panel-bg); border-bottom: 1px solid var(--border-color); z-index: 100; }
+        .nav-left { display: flex; align-items: center; gap: 15px; }
+        .menu-btn { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; }
+        .menu-btn span { width: 22px; height: 2px; background: var(--text-color); transition: 0.3s; }
+        .app-title { font-size: 1.2rem; font-weight: 700; color: var(--accent-color); letter-spacing: 1px; }
+        .nav-right { display: flex; align-items: center; gap: 15px; }
+        .icon-btn { background: none; border: none; color: var(--text-color); cursor: pointer; font-size: 1.1rem; padding: 5px; border-radius: 50%; transition: background 0.2s; }
+        .icon-btn:hover { background: rgba(255,255,255,0.1); }
+
+        /* Main Workspace Layout */
+        .workspace { display: flex; flex: 1; position: relative; overflow: hidden; }
+
+        /* Sliding Drawer Sidebar */
+        sidebar { position: absolute; left: -320px; top: 0; width: 320px; height: 100%; background: var(--panel-bg); border-right: 1px solid var(--border-color); transition: left 0.3s ease; z-index: 200; display: flex; flex-direction: column; padding: 20px; }
+        sidebar.open { left: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .sidebar-search { width: 100%; padding: 10px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); margin-bottom: 15px; }
+        .sidebar-menu-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .sidebar-item { padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; }
+        .sidebar-item:hover { background: rgba(255,255,255,0.08); }
+
+        /* Chat Area */
+        .chat-container { flex: 1; display: flex; flex-direction: column; height: 100%; max-width: 900px; margin: 0 auto; width: 100%; padding: 20px; }
+        .chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-bottom: 20px; }
+        .message { padding: 12px 16px; border-radius: 12px; max-width: 80%; line-height: 1.5; font-size: 0.95rem; }
+        .message.user { background: var(--accent-color); color: #fff; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .message.ai { background: var(--panel-bg); border: 1px solid var(--border-color); color: var(--text-color); align-self: flex-start; border-bottom-left-radius: 2px; }
+        
+        .ai-actions { display: flex; gap: 10px; margin-top: 8px; font-size: 0.85rem; color: var(--text-secondary); align-items: center; }
+        .ai-actions button { background: none; border: none; color: var(--text-secondary); cursor: pointer; transition: color 0.2s; }
+        .ai-actions button:hover { color: var(--accent-color); }
+
+        /* Input Control Bar */
+        .chat-input-area { padding: 15px; background: var(--panel-bg); border-top: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px; border-radius: 12px; margin-bottom: 10px; }
+        .chat-input-area input { flex: 1; background: none; border: none; color: var(--text-color); font-size: 1rem; outline: none; }
+        .chat-input-area input::placeholder { color: var(--text-secondary); }
+
+        /* Audio Arc / Live Visualizer Modal */
+        #live-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; flex-direction: column; }
+        .audio-arc { width: 220px; height: 220px; border: 4px solid transparent; border-top-color: #f59e0b; border-bottom-color: #f59e0b; border-radius: 50%; animation: spinArc 2s linear infinite; box-shadow: 0 0 30px rgba(245, 158, 11, 0.4); }
+        @keyframes spinArc { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body data-theme="dark">
+
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <div id="splash-logo">VALEN.AI</div>
+    </div>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="nav-left">
+            <button class="menu-btn" onclick="toggleSidebar()">
+                <span></span><span></span>
+            </button>
+            <div class="app-title">VALEN.AI</div>
+        </div>
+        <div class="nav-right">
+            <button class="icon-btn" onclick="toggleTheme()" title="Toggle Theme">🌓</button>
+            <button class="icon-btn" onclick="startNewChat()" title="New Chat">➕</button>
+            <button class="icon-btn" onclick="openProfile()" title="Profile">👤</button>
+        </div>
+    </header>
+
+    <!-- Workspace & Drawer -->
+    <div class="workspace">
+        <sidebar id="app-sidebar">
+            <div class="sidebar-header">
+                <h3>Navigation Hub</h3>
+                <button class="icon-btn" onclick="toggleSidebar()">✕</button>
+            </div>
+            <input type="text" class="sidebar-search" placeholder="Search chats..." id="chatSearch">
+            <div class="sidebar-menu-list">
+                <div class="sidebar-item" onclick="triggerMediaRestriction('Image Generation')">🎨 Image Generation (App Only)</div>
+                <div class="sidebar-item" onclick="triggerMediaRestriction('Video Generation')">🎬 Video Generation (App Only)</div>
+                <div class="sidebar-item" onclick="generateApiKey()">🔑 Generate Free API Key</div>
+                <div class="sidebar-item" onclick="window.location.href='https://t.me/gbx_support_bot'">🤖 Telegram Support Bot</div>
+                <div class="sidebar-item" onclick="openAdminPanel()">⚙️ Admin Supreme Control</div>
+            </div>
+        </sidebar>
+
+        <!-- Chat Main Window -->
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message ai">
+                    Welcome! I am Valen.ai. How can I assist you with your high-performance enterprise tasks today?
+                    <div class="ai-actions">
+                        <button onclick="handleFeedback(this, 'like')">👍 Like</button>
+                        <button onclick="handleFeedback(this, 'dislike')">👎 Dislike</button>
+                        <button onclick="copyMessage(this)">📋 Copy</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Bar -->
+            <div class="chat-input-area">
+                <button class="icon-btn" onclick="openAttachments()">📎</button>
+                <input type="text" id="userInput" placeholder="Ask Valen...">
+                <button class="icon-btn" onclick="toggleVoiceRecord()" id="micBtn">🎙️</button>
+                <button class="icon-btn" onclick="startLiveMode()" title="Live Voice Mode">⚡</button>
+                <button class="icon-btn" onclick="sendMessage()">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Voice Modal with Glowing Arc -->
+    <div id="live-modal">
+        <div class="audio-arc"></div>
+        <p style="color: #fff; margin-top: 20px; font-weight: 600;">Valen.ai Live Voice Core Active...</p>
+        <button class="icon-btn" style="margin-top: 30px; background: #ef4444; padding: 10px 20px; border-radius: 8px;" onclick="closeLiveMode()">End Session</button>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('app-sidebar').classList.toggle('open');
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            body.dataset.theme = body.dataset.theme === 'dark' ? 'light' : 'dark';
+        }
+
+        function startNewChat() {
+            document.getElementById('chatMessages').innerHTML = `
+                <div class="message ai">
+                    New conversation initialized. What would you like to explore?
+                </div>
+            `;
+        }
+
+        function triggerMediaRestriction(type) {
+            alert(`${type} is restricted on the web interface to optimize performance. Please download the official Valen.ai Mobile App to access this feature!`);
+        }
+
+        function openAdminPanel() {
+            let pwd = prompt("Enter Admin Master Password:");
+            if(pwd === "Admin@9431") {
+                window.location.href = "/admin";
+            } else if(pwd !== null) {
+                alert("Incorrect Master Password!");
+            }
+        }
+
+        async function generateApiKey() {
+            let res = await fetch('/api/generate_key', { method: 'POST' });
+            let data = await res.json();
+            if(res.ok) {
+                alert(`Your Free API Key generated successfully:\n${data.api_key}\n(Limit: 3 keys/month, 1000 tokens)`);
+            } else {
+                alert(data.detail || "Error generating key");
+            }
+        }
+
+        async function sendMessage() {
+            let input = document.getElementById('userInput');
+            let text = input.value.trim();
+            if(!text) return;
+
+            let container = document.getElementById('chatMessages');
+            container.innerHTML += `<div class="message user">${text}</div>`;
+            input.value = "";
+            container.scrollTop = container.scrollHeight;
+
+            let formData = new FormData();
+            formData.append('session_id', 'default_session');
+            formData.append('prompt', text);
+
+            let res = await fetch('/api/chat', { method: 'POST', body: formData });
+            let data = await res.json();
+
+            if(res.ok) {
+                container.innerHTML += `
+                    <div class="message ai">
+                        ${data.reply}
+                        <div class="ai-actions">
+                            <button onclick="handleFeedback(this, 'like')">👍 Like</button>
+                            <button onclick="handleFeedback(this, 'dislike')">👎 Dislike</button>
+                            <button onclick="copyMessage(this)">📋 Copy</button>
+                        </div>
+                    </div>
+                `;
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        function handleFeedback(btn, type) {
+            alert(`Feedback recorded: ${type}. Valen.ai is tuning responses accordingly.`);
+        }
+
+        function copyMessage(btn) {
+            let textNode = btn.parentElement.parentElement.innerText.replace("👍 Like👎 Dislike📋 Copy", "").trim();
+            navigator.clipboard.writeText(textNode);
+            alert("Message copied to clipboard!");
+        }
+
+        function startLiveMode() {
+            document.getElementById('live-modal').style.display = 'flex';
+        }
+
+        function closeLiveMode() {
+            document.getElementById('live-modal').style.display = 'none';
+        }
+        
+        function openProfile() {
+            alert("User Profile & Account Settings Panel");
+        }
+        
+        function toggleVoiceRecord() {
+            alert("Voice transcription recording active...");
+        }
+
+        function openAttachments() {
+            alert("Photo / Camera / File picker opened.");
+        }
+    </script>
+</body>
+</html>
