@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valen.ai Supreme Admin Control Panel</title>
+    <style>
+        :root {
+            --bg-color: #07090e;
+            --panel-bg: #101726;
+            --text-color: #ffffff;
+            --text-secondary: #94a3b8;
+            --accent-gold: #f59e0b;
+            --border-color: #1e293b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); min-height: 100vh; padding: 20px; }
+
+        /* Auth Overlay */
+        #auth-overlay {
+            position: fixed; inset: 0; background: rgba(7, 9, 14, 0.95); z-index: 9999;
+            display: flex; justify-content: center; align-items: center; flex-direction: column;
+        }
+        .auth-box { background: var(--panel-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); width: 350px; text-align: center; }
+        .auth-box h2 { color: var(--accent-gold); margin-bottom: 20px; }
+        .auth-box input { width: 100%; padding: 12px; margin-bottom: 15px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; }
+        .auth-box button { width: 100%; padding: 12px; background: var(--accent-gold); border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #000; }
+
+        /* Dashboard Layout */
+        .admin-container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; display: none; }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+        header h1 { color: var(--accent-gold); font-size: 1.5rem; }
+
+        .grid-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        .card { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; }
+        .card h3 { margin-bottom: 15px; font-size: 1.1rem; color: #38bdf8; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+
+        /* Metrics & Lists */
+        .metric-box { font-size: 1.8rem; font-weight: bold; color: var(--accent-gold); margin-top: 10px; }
+        .list-item { background: rgba(255,255,255,0.02); padding: 10px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
+        
+        .btn-group { display: flex; gap: 8px; }
+        .btn-accept { background: #10b981; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+        .btn-reject { background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+
+        /* Voice Command Hub Section */
+        .voice-hub { text-align: center; padding: 30px; background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 10px; }
+        .audio-arc-admin { width: 140px; height: 140px; border: 4px solid transparent; border-top-color: var(--accent-gold); border-bottom-color: var(--accent-gold); border-radius: 50%; animation: spinArc 2s linear infinite; margin: 0 auto 20px auto; box-shadow: 0 0 25px rgba(245, 158, 11, 0.3); }
+        @keyframes spinArc { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .btn-voice-live { background: var(--accent-gold); color: #000; border: none; padding: 10px 25px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <!-- Authentication Modal -->
+    <div id="auth-overlay">
+        <div class="auth-box">
+            <h2>VALEN.AI ADMIN GATE</h2>
+            <input type="password" id="masterPwd" placeholder="Enter Admin Password...">
+            <button onclick="verifyAdmin()">Authenticate</button>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div class="admin-container" id="adminDashboard">
+        <header>
+            <h1>VALEN.AI SUPREME CONTROL CENTER</h1>
+            <button class="btn-reject" onclick="location.reload()">Lock Session</button>
+        </header>
+
+        <div class="grid-section">
+            <!-- System Performance -->
+            <div class="card">
+                <h3>System Telemetry & Load</h3>
+                <p>CPU Core Load</p>
+                <div class="metric-box" id="cpuLoad">12.4%</div>
+                <p style="margin-top: 15px;">RAM Usage</p>
+                <div class="metric-box" id="ramLoad">1.4 GB / 8 GB</div>
+            </div>
+
+            <!-- Bot Fleet Matrix -->
+            <div class="card">
+                <h3>Active & Inactive Bot Fleet</h3>
+                <div class="list-item"><span>BugFixer_SubNode_01</span> <span style="color: #10b981;">ACTIVE</span></div>
+                <div class="list-item"><span>Telemetry_Monitor_02</span> <span style="color: #10b981;">ACTIVE</span></div>
+                <div class="list-item"><span>AutoPatcher_SubNode</span> <span style="color: #94a3b8;">STANDBY</span></div>
+            </div>
+        </div>
+
+        <div class="grid-section">
+            <!-- Admin AI Inbox & Approvals -->
+            <div class="card">
+                <h3>AI Self-Learning & Bug-Fix Inbox</h3>
+                <div class="list-item">
+                    <div>
+                        <strong>Patch #104:</strong> Fix memory leak in async stream handler
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn-accept" onclick="actionInbox(1, 'ACCEPT')">Accept</button>
+                        <button class="btn-reject" onclick="actionInbox(1, 'REJECT')">Reject</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Reports -->
+            <div class="card">
+                <h3>User Reports & Legal Issues</h3>
+                <div class="list-item">
+                    <span>Report #12: Formatting issue on mobile Safari</span>
+                    <span style="color: #f59e0b;">PENDING</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Supreme Voice Command Hub -->
+        <div class="voice-hub">
+            <h3>Supreme Voice Command Hub</h3>
+            <div class="audio-arc-admin" id="voiceArc" style="display: none;"></div>
+            <p id="voiceStatus" style="color: var(--text-secondary); margin-bottom: 15px;">Click below to initialize system-wide voice execution control.</p>
+            <button class="btn-voice-live" id="voiceBtn" onclick="toggleVoiceHub()">Activate Voice Command</button>
+        </div>
+    </div>
+
+    <script>
+        function verifyAdmin() {
+            let pwd = document.getElementById('masterPwd').value;
+            if(pwd === "Admin@9431") {
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('adminDashboard').style.display = 'flex';
+            } else {
+                alert("Incorrect Master Password! Use Admin@9431");
+            }
+        }
+
+        function actionInbox(id, action) {
+            alert(`Action ${action} successfully executed for patch item #${id}. Micro-bot deployed/terminated accordingly.`);
+        }
+
+        let isVoiceActive = false;
+        function toggleVoiceHub() {
+            isVoiceActive = !isVoiceActive;
+            let arc = document.getElementById('voiceArc');
+            let status = document.getElementById('voiceStatus');
+            let btn = document.getElementById('voiceBtn');
+
+            if(isVoiceActive) {
+                arc.style.display = 'block';
+                status.innerText = "Listening for supreme voice commands... System access fully granted.";
+                btn.innerText = "Deactivate Voice Hub";
+                btn.style.background = "#ef4444";
+            } else {
+                arc.style.display = 'none';
+                status.innerText = "Click below to initialize system-wide voice execution control.";
+                btn.innerText = "Activate Voice Command";
+                btn.style.background = "var(--accent-gold)";
+            }
+        }
+    </script>
+</body>
+</html>
